@@ -14,8 +14,8 @@ app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],  # Adjust this to specify allowed origins
     allow_credentials=True,
-    allow_methods=["*"],  # Adjust this to specify allowed methods
-    allow_headers=["*"],  # Adjust this to specify allowed headers
+    allow_methods=["*"],
+    allow_headers=["*"],
 )
 
 # Initialize the TwoPhaseFinancialAdvisor
@@ -40,15 +40,12 @@ class UserData(BaseModel):
     cluster: str
     debts: List[Debt]
 
-# Placeholder function to simulate chatbot processing with 'cluster' as input
 def chatbot_process(data: dict, cluster: str):
-    # Example chatbot function: here you can process the data as required by your chatbot
     print(cluster)
     print(data)
     return f"Chatbot received the following data: {data} with cluster: {cluster}"
 
 def load_json_to_dict(file_path: str) -> dict:
-    """Load JSON data from a file and return it as a dictionary."""
     try:
         with open(file_path, 'r', encoding='utf-8') as file:
             data_dict = json.load(file)
@@ -61,11 +58,7 @@ def load_json_to_dict(file_path: str) -> dict:
 @app.post("/api/financial_data/")
 async def save_data(user_data: UserData):
     data_dict = user_data.dict()
-
-    # Print the cluster field
     print(f"Cluster: {user_data.cluster}")
-
-    # Save data to JSON file
     try:
         with open("user_data.json", "w", encoding="utf-8") as json_file:
             json.dump(data_dict, json_file, ensure_ascii=False, indent=4)
@@ -73,23 +66,51 @@ async def save_data(user_data: UserData):
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Error saving data: {str(e)}")
 
-
-# GET request for initial advice
 @app.get("/api/get_initial_advice/")
 async def get_initial_advice():
-    # Define the path to the JSON file
-    file_path = 'user_data.json'  # The path to the user data JSON file
-    
-    # Load the financial data from the provided JSON file
+    file_path = 'user_data.json'
     financial_data = load_json_to_dict(file_path)
     print(financial_data)
-
-    advice_type = financial_data['cluster']
+    advice_type = financial_data.get('cluster', 'unknown')
     print(advice_type)
-
-    # Get the initial advice
     try:
         initial_advice = advisor.get_initial_advice(financial_data, advice_type)
+        with open("initial_history.json", "w", encoding="utf-8") as json_file:
+            json.dump({"advice": initial_advice}, json_file, ensure_ascii=False, indent=4)
         return {"advice": initial_advice}
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Error generating advice: {str(e)}")
+
+class UserInput(BaseModel):
+    user_input: str
+
+def load_initial_chat_history(file_path: str) -> List[dict]:
+    try:
+        with open(file_path, 'r', encoding='utf-8') as file:
+            initial_history = json.load(file)
+        return initial_history
+    except Exception as e:
+        print(f"Error reading initial chat history: {str(e)}")
+        return []
+
+def save_chat_history(file_path: str, chat_history: List[dict]) -> None:
+    try:
+        with open(file_path, 'w', encoding='utf-8') as file:
+            json.dump(chat_history, file, ensure_ascii=False, indent=4)
+    except Exception as e:
+        print(f"Error saving chat history: {str(e)}")
+
+@app.post("/api/chats/")
+async def chats(user_input: UserInput):
+    print(user_input)
+    if not user_input.user_input:
+        raise HTTPException(status_code=400, detail="User input is required.")
+    try:
+        advisor.initial_advice = json.dumps(load_initial_chat_history('initial_history.json'))
+        advisor.financial_data = load_json_to_dict('user_data.json')
+        response = advisor.chat(user_input.user_input)
+        return {
+            "chatbot_response": response,
+        }
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Error during chat: {str(e)}")
