@@ -1,0 +1,37 @@
+{
+    "income": "45450000",
+    "fixed_expense": "15000",
+    "variable_expense": "5000",
+    "total_debt": "20000",
+    "saving": "10000",
+    "cluster": "A",
+    "debts": [
+        {
+            "cardName": "Card Name 2",
+            "cardType": "Store Card",
+            "interestRate": 8.0,
+            "minimumPayment": 500.0,
+            "fullPayment": 3000.0,
+            "remainingPeriod": 6,
+            "debtAmount": 8000.0
+        },
+        {
+            "cardName": "Card Name 3",
+            "cardType": "Credit Card",
+            "interestRate": 15.0,
+            "minimumPayment": 1200.0,
+            "fullPayment": 7000.0,
+            "remainingPeriod": 18,
+            "debtAmount": 18000.0
+        },
+        {
+            "cardName": "Card Name 4",
+            "cardType": "Store Card",
+            "interestRate": 12.5,
+            "minimumPayment": 800.0,
+            "fullPayment": 4000.0,
+            "remainingPeriod": 9,
+            "debtAmount": 10000.0
+        }
+    ]
+}
