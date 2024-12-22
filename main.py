@@ -1,13 +1,22 @@
 from fastapi import FastAPI, HTTPException
+from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 from typing import List
 import json
 from chain import TwoPhaseFinancialAdvisor
 from fastapi.responses import StreamingResponse
-# import json
 from io import StringIO
 
 app = FastAPI()
+
+# Enable CORS
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],  # Adjust this to specify allowed origins
+    allow_credentials=True,
+    allow_methods=["*"],  # Adjust this to specify allowed methods
+    allow_headers=["*"],  # Adjust this to specify allowed headers
+)
 
 # Initialize the TwoPhaseFinancialAdvisor
 advisor = TwoPhaseFinancialAdvisor()
@@ -34,7 +43,6 @@ class UserData(BaseModel):
 # Placeholder function to simulate chatbot processing with 'cluster' as input
 def chatbot_process(data: dict, cluster: str):
     # Example chatbot function: here you can process the data as required by your chatbot
-    # Now, the chatbot process uses both data and cluster as inputs
     print(cluster)
     print(data)
     return f"Chatbot received the following data: {data} with cluster: {cluster}"
@@ -43,7 +51,7 @@ def load_json_to_dict(file_path: str) -> dict:
     """Load JSON data from a file and return it as a dictionary."""
     try:
         with open(file_path, 'r', encoding='utf-8') as file:
-            data_dict = json.load(file)  # Read JSON file into dictionary
+            data_dict = json.load(file)
         return data_dict
     except Exception as e:
         print(f"Error reading JSON file: {str(e)}")
@@ -66,20 +74,13 @@ async def save_data(user_data: UserData):
         raise HTTPException(status_code=500, detail=f"Error saving data: {str(e)}")
 
 
-
-    # GET request for initial advice
+# GET request for initial advice
 @app.get("/api/get_initial_advice/")
 async def get_initial_advice():
-    # """Retrieve initial financial advice based on the financial data loaded from a JSON file"""
-    # if advice_type.lower() not in ["red", "yellow"]:
-    #     raise HTTPException(status_code=400, detail="Advice type must be 'red' or 'yellow'.")
-    
     # Define the path to the JSON file
     file_path = 'user_data.json'  # The path to the user data JSON file
     
     # Load the financial data from the provided JSON file
-    # financial_data = load_financial_data_from_json(file_path)
-    file_path = 'user_data.json'  # Path to your JSON file
     financial_data = load_json_to_dict(file_path)
     print(financial_data)
 
@@ -92,15 +93,3 @@ async def get_initial_advice():
         return {"advice": initial_advice}
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Error generating advice: {str(e)}")
-    
-        # Get the initial advice
-    # try:
-    #     initial_advice = advisor.get_initial_advice(financial_data, advice_type)
-        
-    #     # Convert the response to a stream (use StringIO to simulate a file-like object)
-    #     advice_stream = StringIO(initial_advice)
-        
-    #     # Return StreamingResponse
-    #     return StreamingResponse(advice_stream, media_type="text/plain")
-    # except Exception as e:
-      
