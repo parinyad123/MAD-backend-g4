@@ -349,7 +349,7 @@ class TwoPhaseFinancialAdvisor:
         data = self.financial_data
 
         disposable_income = float(data['income']) - float(data['fixed_expense']) - float(data['variable_expense'])
-        total_debt = sum(debt['debtAmount'] for debt in data['debts'])
+        total_debt = sum(debt['debt_amount'] for debt in data['debts'])
         summary = f"""
         Monthly Income: ฿{data['income']}
         Disposable Income: ฿{disposable_income}
@@ -368,17 +368,17 @@ def main():
         "debts": [
             {
                 "card_name": "MasterCard",
-                "debtAmount": 4500,
+                "debt_amount": 4500,
                 "interest_rate": 18.0
             },
             {
                 "card_name": "Visa",
-                "debtAmount": 3000,
+                "debt_amount": 3000,
                 "interest_rate": 15.5
             },
             {
                 "card_name": "American Express",
-                "debtAmount": 7000,
+                "debt_amount": 7000,
                 "interest_rate": 20.0
             }
         ]

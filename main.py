@@ -30,7 +30,7 @@ class Debt(BaseModel):
     minimumPayment: float
     fullPayment: float
     remainingPeriod: int
-    debtAmount: float
+    debt_amount: float
 
 class UserData(BaseModel):
     income: str
