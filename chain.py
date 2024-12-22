@@ -82,10 +82,12 @@ def get_red_financial_advice(financial_data: Dict) -> str:
 
 def get_yellow_financial_advice(financial_data: Dict) -> str:
     """Get yellow financial advice focusing on credit card optimization"""
-    system_prompt = """You are a financial advisor in Thailand specializing in credit card debt optimization. Analyze each credit card debt separately and provide two payoff strategies: by card balance (smallest to largest) and by interest rate (highest to lowest). Calculate specific timelines for each card. All monetary values should be in Thai Baht (฿), numbers only without currency symbol in JSON.
+    system_prompt = """You are a financial advisor in Thailand specializing in credit card debt optimization. Analyze each credit card debt separately and provide two payoff strategies: by card balance (smallest to largest) and by interest rate (highest to lowest). Calculate specific timelines for each card. All monetary values should be in Thai Baht (฿)
 
     For the advisoryMessage in Thai:
-    - Start with a warm, professional greeting
+
+    - Start with a warm, professional greeting 
+    - Call yourself คุณหมอ
     - Summarize total debt situation across all cards (using ฿)
     - Explain both strategic approaches (balance-based vs interest-based)
     - Detail the recommended strategy with clear reasoning
@@ -93,6 +95,8 @@ def get_yellow_financial_advice(financial_data: Dict) -> str:
     - Include specific timeline for becoming debt-free
     - Add motivational encouragement
     - Close with offer for additional guidance
+    - if minimum payment : amount = minimum_payment - (debt amount* interest rate)  
+
     """
 
     prompt = f"""Analyze these credit cards for optimal payoff strategies:
@@ -104,62 +108,112 @@ def get_yellow_financial_advice(financial_data: Dict) -> str:
     Credit Cards:
     {financial_data['debts']}
 
-    Provide credit card specific payoff strategies in this JSON structure:
-    {{
-        "available_for_debt_payment": (number in Baht),
-        "credit_card_analysis": [{{
-            "card_name": (string),
-            "debt_amount": (number in Baht),
-            "interest_rate": (number),
-            "monthly_interest": (number in Baht)
-        }}],
-        "balance_based_strategy": {{
-            "order": [{{
-                "priority": (number),
-                "card_name": (string),
-                "months_to_payoff": (number),
-                "monthly_payment": (number in Baht),
-                "total_interest_paid": (number in Baht)
-            }}],
-            "total_payoff_months": (number),
-            "total_interest_paid": (number in Baht)
-        }},
-        "interest_based_strategy": {{
-            "order": [{{
-                "priority": (number),
-                "card_name": (string),
-                "months_to_payoff": (number),
-                "monthly_payment": (number in Baht),
-                "total_interest_paid": (number in Baht)
-            }}],
-            "total_payoff_months": (number),
-            "total_interest_paid": (number in Baht)
-        }},
-        "recommended_strategy": {{
-            "method": (string in Thai),
-            "reason": (string in Thai),
-            "faster_payoff_option": {{
-                "monthly_payment": (number in Baht),
-                "months_saved": (number),
-                "additional_interest_saved": (number in Baht)
-            }},
-            "longer_payoff_option": {{
-                "monthly_payment": (number in Baht),
-                "additional_months": (number),
-                "extra_interest_cost": (number in Baht)
-            }}
-        }},
-        "advisoryMessage": (comprehensive message in Thai following this structure:
-            - คำทักทาย: Warm greeting
-            - ภาพรวมหนี้บัตรเครดิต: Credit card debt overview (use ฿)
-            - การวิเคราะห์กลยุทธ์: Analysis of both strategies
-            - แผนที่แนะนำ: Recommended strategy explanation
-            - แผนการชำระรายเดือน: Monthly payment plan
-            - ระยะเวลาการปลดหนี้: Timeline to become debt-free
-            - คำแนะนำเพิ่มเติม: Additional advice
-            - กำลังใจ: Encouragement
-            - ข้อเสนอความช่วยเหลือ: Offer for further assistance)
-    }}"""
+    Provide credit card specific payoff strategies in this structure:
+    สรุปแผนการชำระหนี้:
+    -------------------------------------------------
+    * เงินที่สามารถนำไปชำระหนี้ได้: (number in Baht)
+
+    * สรุปข้อมูลบัตรเครดิตทั้งหมด:
+    บัตรที่ 1:
+    - ชื่อบัตร: (string)
+    - ยอดหนี้คงเหลือ: (number in Baht)
+    - ยอดขั้นต่ำที่ต้องจ่าย: (number in Baht)
+    - ดอกเบี้ยต่อเดือน: (number)%
+
+    บัตรที่ 2:
+    - ชื่อบัตร: (string)
+    - ยอดหนี้คงเหลือ: (number in Baht)
+    - ยอดขั้นต่ำที่ต้องจ่าย: (number in Baht)
+    - ดอกเบี้ยต่อเดือน: (number)%
+
+    [รายละเอียดบัตรอื่นๆ ในรูปแบบเดียวกัน]
+    --------------------------------------------------
+
+    * แผนการชำระหนี้ 2 แบบ:
+
+    + แบบที่ 1: จ่ายบัตรที่มียอดน้อยก่อน (Snowball):
+    - ยอดที่ต้องจ่ายทั้งหมดรวมทุกบัตร: (number in Baht)
+    - ดอกเบี้ยรวมทุกบัตร: (number in Baht) ( Full Payment)
+    - ดอกเบี้ยรวมทุกบัตร: (number in Baht) ( Minimum Payment)
+
+    - ลำดับการจ่าย:
+        1 - (ชื่อบัตร: string) : ยอดหนี้ (number in Baht)
+        แบบจ่ายขั้นต่ำ:
+        - จ่ายต่อเดือนรวม: (number in Baht)
+        - ระยะเวลารวม: (number เดือน)
+        แบบจ่ายเต็มจำนวน:
+        - จ่ายต่อเดือนรวม: (number in Baht)
+        - ระยะเวลารวม: (number เดือน)
+        2 - (ชื่อบัตร: string) : ยอดหนี้ (number in Baht)
+        [ลำดับถัดไปตามจำนวนบัตร]
+        แบบจ่ายขั้นต่ำ:
+        - จ่ายต่อเดือนรวม: (number in Baht)
+        - ระยะเวลารวม: (number เดือน)
+        แบบจ่ายเต็มจำนวน:
+        - จ่ายต่อเดือนรวม: (number in Baht)
+        - ระยะเวลารวม: (number เดือน)
+    --------------------------------------------------
+
+    + แบบที่ 2: จ่ายบัตรดอกเบี้ยสูงก่อน (Avalanche):
+    - ยอดที่ต้องจ่ายทั้งหมดรวมทุกบัตร: (number in Baht)
+    - ดอกเบี้ยรวมทุกบัตร: (number in Baht) ( Full Payment)
+    - ดอกเบี้ยรวมทุกบัตร: (number in Baht) ( Minimum Payment)
+    - ลำดับการจ่าย:
+        1 - (ชื่อบัตร: string) : ยอดหนี้ (number in Baht)
+        แบบจ่ายขั้นต่ำ:
+        - จ่ายต่อเดือนรวม: (number in Baht)
+        - ระยะเวลารวม: (number เดือน)
+        แบบจ่ายเต็มจำนวน:
+        - จ่ายต่อเดือนรวม: (number in Baht)
+        - ระยะเวลารวม: (number เดือน)
+        2 - (ชื่อบัตร: string) : ยอดหนี้ (number in Baht)
+        [ลำดับถัดไปตามจำนวนบัตร]
+        แบบจ่ายขั้นต่ำ:
+        - จ่ายต่อเดือนรวม: (number in Baht)
+        - ระยะเวลารวม: (number เดือน)
+        แบบจ่ายเต็มจำนวน:
+        - จ่ายต่อเดือนรวม: (number in Baht)
+        - ระยะเวลารวม: (number เดือน)
+    ----------------------------------------------------
+
+    * แผนที่แนะนำ: (string)
+    - เหตุผล: (string in Thai)
+
+    * เปรียบเทียบแผนการชำระ:
+    แผนเร่งรัด:
+    - จ่ายต่อเดือน: (number in Baht)
+    - ประหยัดเวลาได้: (number เดือน)
+    - ประหยัดดอกเบี้ย: (number in Baht)
+
+    แผนผ่อนสบาย:
+    - จ่ายต่อเดือน: (number in Baht)
+    - ใช้เวลาเพิ่ม: (number เดือน)
+    - จ่ายดอกเบี้ยเพิ่ม: (number in Baht)
+
+    * แผนการชำระรายบัตร:
+    บัตรที่ 1: (ชื่อบัตร)
+    - เดือนที่เริ่มจ่าย: (number)
+    - จำนวนเดือนที่ต้องจ่าย: (number)
+    - ยอดจ่ายต่อเดือน: (number in Baht)
+
+    บัตรที่ 2: (ชื่อบัตร)
+    - เดือนที่เริ่มจ่าย: (number)
+    - จำนวนเดือนที่ต้องจ่าย: (number)
+    - ยอดจ่ายต่อเดือน: (number in Baht)
+
+    [รายละเอียดบัตรอื่นๆ ในรูปแบบเดียวกัน]
+
+    * คำแนะนำ: (ข้อความแนะนำภาษาไทยที่ประกอบด้วย:
+        - คำทักทาย
+        - ภาพรวมหนี้บัตรเครดิตทั้งหมด
+        - วิเคราะห์แผนทั้ง 2 แบบ
+        - แผนที่แนะนำพร้อมเหตุผล
+        - ตารางการผ่อนชำระรายเดือนแต่ละบัตร
+        - ระยะเวลาการปลดหนี้
+        - คำแนะนำเพิ่มเติม
+        - ให้กำลังใจ
+        - เสนอความช่วยเหลือเพิ่มเติม)
+    """
 
     try:
         response = openai_client.chat.completions.create(
@@ -248,6 +302,8 @@ class TwoPhaseFinancialAdvisor:
             focus on practical, actionable guidance, use Thai language (unless asked for English), 
             and reference specific numbers and recommendations."""
         )
+        print(human_input)
+        print(type(human_input))
 
         conversation_prompt = ChatPromptTemplate.from_messages([
             SystemMessage(content=system_template),
@@ -291,14 +347,14 @@ class TwoPhaseFinancialAdvisor:
     def _create_financial_summary(self) -> str:
         """Create a concise summary of financial data"""
         data = self.financial_data
-        total_debt = sum(debt['debt_amount'] for debt in data['debts'])
-        disposable_income = data['income'] - data['fixed_expenses'] - data['variable_expenses']
-        
+
+        disposable_income = float(data['income']) - float(data['fixed_expense']) - float(data['variable_expense'])
+        total_debt = sum(debt['debtAmount'] for debt in data['debts'])
         summary = f"""
         Monthly Income: ฿{data['income']}
         Disposable Income: ฿{disposable_income}
         Total Debt: ฿{total_debt}
-        Debt-to-Income Ratio: {(total_debt / data['income']):.2f}
+        Debt-to-Income Ratio: {(float(total_debt) / float(data['income'])):.2f}
         """
         return summary
     
@@ -307,22 +363,22 @@ def main():
     financial_data = {
         "income": 5000,
         "savings_amount": 10000,
-        "fixed_expenses": 2000,
+        "fixed_expense": 2000,
         "variable_expenses": 1000,
         "debts": [
             {
                 "card_name": "MasterCard",
-                "debt_amount": 4500,
+                "debtAmount": 4500,
                 "interest_rate": 18.0
             },
             {
                 "card_name": "Visa",
-                "debt_amount": 3000,
+                "debtAmount": 3000,
                 "interest_rate": 15.5
             },
             {
                 "card_name": "American Express",
-                "debt_amount": 7000,
+                "debtAmount": 7000,
                 "interest_rate": 20.0
             }
         ]
