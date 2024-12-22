@@ -66,6 +66,9 @@ async def save_data(user_data: UserData):
         raise HTTPException(status_code=500, detail=f"Error saving data: {str(e)}")
 
 
+@app.get("/")
+async def Greeting():
+    return {"message": "Hello, welcome to the financial advisor API!"}
 
     # GET request for initial advice
 @app.get("/api/get_initial_advice/")
